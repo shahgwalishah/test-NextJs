@@ -24,23 +24,29 @@ export default async function routes(fastify, options) {
   fastify.get('/search-emails', async (request, reply) => {
     try {
       const { query } = request.query;
+
+      console.log('Incoming query:', query);
+
       if (!query) {
         return reply.status(200).send([]);
       }
 
       const searchQuery = `%${query.toLowerCase()}%`;
-      const emails = await fastify.knex('emails')
-          .whereRaw("lower(to) like ?", [searchQuery])
-          .orWhereRaw("lower(cc) like ?", [searchQuery])
-          .orWhereRaw("lower(bcc) like ?", [searchQuery])
-          .orWhereRaw("lower(subject) like ?", [searchQuery])
-          .orWhereRaw("lower(body) like ?", [searchQuery]);
 
-      console.log('Search query:', query, 'Results:', emails);
+      const emails = await fastify.knex('emails')
+          .whereRaw("lower(`to`) like ?", [searchQuery])
+          .orWhereRaw("lower(`cc`) like ?", [searchQuery])
+          .orWhereRaw("lower(`bcc`) like ?", [searchQuery])
+          .orWhereRaw("lower(`subject`) like ?", [searchQuery])
+          .orWhereRaw("lower(`body`) like ?", [searchQuery]);
+
+      console.log('Search results:', emails);
+
       return reply.status(200).send(emails);
+
     } catch (error) {
       console.error('Error searching emails:', error);
-      return reply.status(500).send({ error: 'Failed to search emails' });
+      return reply.status(500).send({ error: 'Failed to search emails', detail: error.message });
     }
   });
 }
